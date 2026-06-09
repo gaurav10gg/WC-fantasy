@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { syncProfileFromAuth } from '../lib/profileHelpers'
 import { supabase } from '../lib/supabase'
 
 export default function AuthCallback() {
@@ -9,9 +10,10 @@ export default function AuthCallback() {
   useEffect(() => {
     let done = false
 
-    const finish = (session) => {
+    const finish = async (session) => {
       if (done) return
       done = true
+      if (session?.user) await syncProfileFromAuth(session.user)
       navigate(session ? '/dashboard' : '/login', { replace: true })
     }
 

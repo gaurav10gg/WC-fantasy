@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { syncProfileFromAuth } from './profileHelpers'
 import { supabase } from './supabase'
 
 const AuthContext = createContext(null)
@@ -8,12 +9,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (s?.user) await syncProfileFromAuth(s.user)
       setSession(s)
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      if (s?.user) await syncProfileFromAuth(s.user)
       setSession(s)
     })
 

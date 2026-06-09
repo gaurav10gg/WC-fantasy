@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Globe, Home, LogOut, Shield, Swords, X } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { nameFromUserMetadata } from '../lib/profileHelpers'
 import { supabase } from '../lib/supabase'
 import ThemeToggle from './ThemeToggle'
 
@@ -29,7 +30,7 @@ export default function Sidebar({ open, onClose }) {
       supabase.from('profiles').select('team_name, display_name').eq('id', user.id).single(),
       supabase.from('group_members').select('group_id').eq('user_id', user.id),
     ])
-    setTeamName(prof?.team_name || prof?.display_name || 'Player')
+    setTeamName(prof?.team_name || prof?.display_name || nameFromUserMetadata(user) || 'Player')
 
     if (memberships?.length) {
       const ids = memberships.map((m) => m.group_id)
