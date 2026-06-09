@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import GroupPredictionPicker from './GroupPredictionPicker'
 import LeaderboardTable from './LeaderboardTable'
 import LeagueHeader from './LeagueHeader'
 import MatchCard from './MatchCard'
+import MatchTransparencyModal from './MatchTransparencyModal'
 import UserPredictionsModal from './UserPredictionsModal'
+import { useConfettiOnCorrectResults } from '../hooks/useConfettiOnCorrectResults'
+import { fireGoalConfetti } from '../lib/confetti'
+import { isMatchFinished } from '../lib/matchHelpers'
 import { GROUP_LABELS } from '../lib/scoring'
 import { getRoundInfo } from '../lib/rounds'
 import { supabase } from '../lib/supabase'
@@ -31,6 +35,7 @@ export default function PredictionsPanel({
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [viewingUser, setViewingUser] = useState(null)
+  const [transparencyMatch, setTransparencyMatch] = useState(null)
 
   const roundInfo = getRoundInfo(activeRoundKey)
   const isGroupWinnersRound = activeRoundKey === 'group_winners'
@@ -137,6 +142,20 @@ export default function PredictionsPanel({
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useConfettiOnCorrectResults(matches, matchPredictions)
+
+  const prevGroupResultsRef = useRef({})
+  useEffect(() => {
+    for (const label of GROUP_LABELS) {
+      const prev = prevGroupResultsRef.current[label]
+      const now = groupResults[label]
+      prevGroupResultsRef.current[label] = now
+      if (now && !prev && groupPredictions[label] === now) {
+        fireGoalConfetti()
+      }
+    }
+  }, [groupResults, groupPredictions])
 
   useEffect(() => {
     const channel = supabase
@@ -253,6 +272,11 @@ export default function PredictionsPanel({
     await loadData()
   }
 
+  const finishedMatches = useMemo(
+    () => matches.filter(isMatchFinished),
+    [matches]
+  )
+
   const allLocked = isGroupWinnersRound
     ? GROUP_LABELS.every((l) => groupLockState[l])
     : matches.length > 0 && matches.every(isMatchLocked)
@@ -306,6 +330,29 @@ export default function PredictionsPanel({
             )}
           </div>
 
+          {finishedMatches.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-1 font-display text-lg font-bold uppercase tracking-widest text-pitch">
+                Results &amp; transparency
+              </h2>
+              <p className="mb-3 text-sm text-muted">
+                See how your picks compared — and view everyone&apos;s predictions after full time.
+              </p>
+              <div className="grid gap-3">
+                {finishedMatches.map((match) => (
+                  <MatchCard
+                    key={`result-${match.id}`}
+                    match={match}
+                    prediction={matchPredictions[match.id]}
+                    locked
+                    onChange={() => {}}
+                    onViewAllPicks={setTransparencyMatch}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
           {!isGroupWinnersRound && matches.some((m) => m.group_label) &&
             GROUP_LABELS.filter((l) => (matchesByGroup[l] ?? []).length > 0).map((label) => (
               <section key={label} className="mt-8">
@@ -313,7 +360,9 @@ export default function PredictionsPanel({
                   Group {label}
                 </h2>
                 <div className="grid gap-3">
-                  {(matchesByGroup[label] ?? []).map((match) => (
+                  {(matchesByGroup[label] ?? [])
+                    .filter((m) => !isMatchFinished(m))
+                    .map((match) => (
                     <MatchCard
                       key={match.id}
                       match={match}
@@ -334,7 +383,9 @@ export default function PredictionsPanel({
                 {roundInfo.subtitle}
               </h2>
               <div className="grid gap-3">
-                {knockoutMatches.map((match) => (
+                {knockoutMatches
+                  .filter((m) => !isMatchFinished(m))
+                  .map((match) => (
                   <MatchCard
                     key={match.id}
                     match={match}
@@ -353,6 +404,7 @@ export default function PredictionsPanel({
             <GroupPredictionPicker
               predictions={groupPredictions}
               locked={groupLockState}
+              groupResults={groupResults}
               onChange={(label, team) =>
                 setGroupPredictions((prev) => ({ ...prev, [label]: team }))
               }
@@ -389,6 +441,13 @@ export default function PredictionsPanel({
           displayName={viewingUser.display_name}
           viewerUserId={userId}
           onClose={() => setViewingUser(null)}
+        />
+      )}
+      {transparencyMatch && (
+        <MatchTransparencyModal
+          match={transparencyMatch}
+          groupId={groupId}
+          onClose={() => setTransparencyMatch(null)}
         />
       )}
     </>

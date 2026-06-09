@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Eye, EyeOff, Loader2, X } from 'lucide-react'
 import TeamName from './TeamName'
+import { formatMatchScore, getMatchWinnerLabel } from '../lib/matchHelpers'
 import { GROUP_LABELS } from '../lib/scoring'
 import { ROUNDS } from '../lib/rounds'
 import { supabase } from '../lib/supabase'
@@ -11,7 +12,7 @@ function winnerLabel(match, side) {
   return 'Draw'
 }
 
-function MatchPickRow({ match, prediction, hidden }) {
+function MatchPickRow({ match, prediction, hidden, showResult }) {
   const score =
     prediction?.predicted_home_score != null && prediction?.predicted_away_score != null
       ? `${prediction.predicted_home_score}–${prediction.predicted_away_score}`
@@ -41,6 +42,14 @@ function MatchPickRow({ match, prediction, hidden }) {
           <span className="text-xs text-muted">No pick</span>
         )}
       </div>
+      {showResult && match.status === 'finished' && (
+        <p className="mt-2 text-xs text-muted">
+          Result: <span className="font-semibold text-cream">{formatMatchScore(match)}</span>
+          {getMatchWinnerLabel(match) && (
+            <span className="ml-2 text-pitch">· {getMatchWinnerLabel(match)}</span>
+          )}
+        </p>
+      )}
     </div>
   )
 }
@@ -177,6 +186,7 @@ export default function UserPredictionsModal({
                           match={match}
                           prediction={matchPredictions[match.id]}
                           hidden={!isMatchRevealed(match)}
+                          showResult
                         />
                       ))}
                     </div>

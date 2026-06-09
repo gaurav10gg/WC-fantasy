@@ -1,9 +1,14 @@
-import { Lock, Minus } from 'lucide-react'
+import { Eye, Lock, Minus } from 'lucide-react'
 import Flag from './Flag'
+import KickoffCountdown from './KickoffCountdown'
+import MatchResultSummary from './MatchResultSummary'
 import TeamName from './TeamName'
+import { isMatchFinished, isMatchUpcoming } from '../lib/matchHelpers'
 
-export default function MatchCard({ match, prediction, locked, onChange }) {
+export default function MatchCard({ match, prediction, locked, onChange, onViewAllPicks }) {
   const selected = prediction?.predicted_winner ?? null
+  const finished = isMatchFinished(match)
+  const upcoming = isMatchUpcoming(match)
 
   function pick(winner) {
     if (locked) return
@@ -31,17 +36,28 @@ export default function MatchCard({ match, prediction, locked, onChange }) {
   ]
 
   return (
-    <div className={`fixture-card border border-border p-4 ${locked ? 'opacity-55' : ''}`}>
-      <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-widest text-muted">
+    <div className={`fixture-card border border-border p-4 ${locked && !finished ? 'opacity-55' : ''}`}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-widest text-muted">
         <span className="text-gold/80">
           {match.group_label ? `Group ${match.group_label}` : 'Knockout'}
         </span>
-        {locked && (
-          <span className="flex items-center gap-1 text-muted">
-            <Lock size={12} />
-            Locked
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {upcoming && match.match_date && (
+            <KickoffCountdown matchDate={match.match_date} />
+          )}
+          {locked && !finished && (
+            <span className="flex items-center gap-1 text-muted">
+              <Lock size={12} />
+              Locked
+            </span>
+          )}
+          {match.status === 'started' && (
+            <span className="animate-pulse font-bold text-red-400">Live</span>
+          )}
+          {finished && (
+            <span className="font-bold text-pitch">FT</span>
+          )}
+        </div>
       </div>
 
       <div className="mb-4 flex flex-col items-center gap-3 border-b border-border pb-4 sm:flex-row sm:justify-between">
@@ -50,53 +66,71 @@ export default function MatchCard({ match, prediction, locked, onChange }) {
         <TeamName name={match.team_away} size="md" />
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {options.map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            disabled={locked}
-            onClick={() => pick(opt.key)}
-            className={`flex min-h-12 items-center justify-center gap-2 border px-3 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-              selected === opt.key
-                ? 'border-pitch bg-pitch text-stadium'
-                : 'border-border bg-stadium text-cream hover:border-border-light'
-            } ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            {opt.key === 'draw' ? (
-              <Minus size={16} strokeWidth={3} />
-            ) : (
-              <Flag team={opt.label} size="sm" />
-            )}
-            <span className="truncate">{opt.label}</span>
-          </button>
-        ))}
-      </div>
+      {finished ? (
+        <>
+          <MatchResultSummary match={match} prediction={prediction} />
+          {onViewAllPicks && (
+            <button
+              type="button"
+              onClick={() => onViewAllPicks(match)}
+              className="mt-3 flex w-full items-center justify-center gap-2 border border-border bg-stadium py-2.5 text-xs font-bold uppercase tracking-widest text-pitch hover:border-pitch/50"
+            >
+              <Eye size={14} />
+              See everyone&apos;s picks
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {options.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                disabled={locked}
+                onClick={() => pick(opt.key)}
+                className={`flex min-h-12 items-center justify-center gap-2 border px-3 py-3 text-xs font-bold uppercase tracking-wider transition-all ${
+                  selected === opt.key
+                    ? 'border-pitch bg-pitch text-stadium'
+                    : 'border-border bg-stadium text-cream hover:border-border-light'
+                } ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                {opt.key === 'draw' ? (
+                  <Minus size={16} strokeWidth={3} />
+                ) : (
+                  <Flag team={opt.label} size="sm" />
+                )}
+                <span className="truncate">{opt.label}</span>
+              </button>
+            ))}
+          </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
-        <span className="uppercase tracking-wider">Exact score (+1)</span>
-        <input
-          type="number"
-          min="0"
-          inputMode="numeric"
-          disabled={locked}
-          value={prediction?.predicted_home_score ?? ''}
-          onChange={(e) => setScore('home', e.target.value)}
-          className="h-10 w-14 border border-border bg-stadium text-center text-base text-cream"
-          placeholder="—"
-        />
-        <span className="font-bold text-gold">:</span>
-        <input
-          type="number"
-          min="0"
-          inputMode="numeric"
-          disabled={locked}
-          value={prediction?.predicted_away_score ?? ''}
-          onChange={(e) => setScore('away', e.target.value)}
-          className="h-10 w-14 border border-border bg-stadium text-center text-base text-cream"
-          placeholder="—"
-        />
-      </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+            <span className="uppercase tracking-wider">Exact score (+1)</span>
+            <input
+              type="number"
+              min="0"
+              inputMode="numeric"
+              disabled={locked}
+              value={prediction?.predicted_home_score ?? ''}
+              onChange={(e) => setScore('home', e.target.value)}
+              className="h-10 w-14 border border-border bg-stadium text-center text-base text-cream"
+              placeholder="—"
+            />
+            <span className="font-bold text-gold">:</span>
+            <input
+              type="number"
+              min="0"
+              inputMode="numeric"
+              disabled={locked}
+              value={prediction?.predicted_away_score ?? ''}
+              onChange={(e) => setScore('away', e.target.value)}
+              className="h-10 w-14 border border-border bg-stadium text-center text-base text-cream"
+              placeholder="—"
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }

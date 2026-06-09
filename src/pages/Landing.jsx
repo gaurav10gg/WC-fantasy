@@ -1,4 +1,4 @@
-import { ArrowRight, Globe } from 'lucide-react'
+import { ArrowRight, Globe, Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Flag from '../components/Flag'
 import Navbar from '../components/Navbar'
@@ -78,6 +78,12 @@ export default function Landing() {
               ))}
           </div>
         </div>
+
+        <p className="mt-12 flex items-center justify-center gap-1.5 text-sm text-muted">
+          Developed with
+          <Heart size={14} className="fill-pitch text-pitch" aria-hidden />
+          by <span className="font-semibold text-cream">Gaurav</span>
+        </p>
       </main>
     </div>
   )

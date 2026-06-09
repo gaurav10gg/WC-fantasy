@@ -128,6 +128,38 @@ export default function Admin() {
     await loadMatches()
   }
 
+  async function resetMatch(matchId) {
+    if (!window.confirm('Reset this match to upcoming? Scores and points will be cleared.')) return
+    setMessage('')
+    setError('')
+    const { error: rpcError } = await supabase.rpc('admin_reset_match', {
+      p_password: ADMIN_PASSWORD,
+      p_match_id: matchId,
+    })
+    if (rpcError) {
+      setError(rpcError.message)
+      return
+    }
+    setMessage('Match reset.')
+    await loadMatches()
+  }
+
+  async function resetRound(roundKey) {
+    if (!window.confirm(`Reset all results in ${roundKey}? Matches go back to upcoming.`)) return
+    setMessage('')
+    setError('')
+    const { data, error: rpcError } = await supabase.rpc('admin_reset_round', {
+      p_password: ADMIN_PASSWORD,
+      p_round_key: roundKey,
+    })
+    if (rpcError) {
+      setError(rpcError.message)
+      return
+    }
+    setMessage(`Reset ${data ?? 0} match(es) in ${roundKey}.`)
+    await loadMatches()
+  }
+
   async function markStarted(matchId) {
     setMessage('')
     setError('')
@@ -214,6 +246,16 @@ export default function Admin() {
                 {r.label}
               </button>
             ))}
+          </div>
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="text-xs text-muted">Reset test results for the active round:</p>
+            <button
+              type="button"
+              onClick={() => resetRound(activeRound)}
+              className="mt-2 min-h-10 border border-red-500/40 px-3 py-2 text-xs uppercase tracking-wider text-red-400 hover:bg-red-500/10"
+            >
+              Reset all {activeRound} results
+            </button>
           </div>
         </section>
 
@@ -321,6 +363,15 @@ export default function Admin() {
                       {match.status === 'upcoming' && (
                         <button type="button" onClick={() => markStarted(match.id)} className="min-h-10 border border-border px-3 text-xs uppercase text-muted">
                           Lock
+                        </button>
+                      )}
+                      {match.status !== 'upcoming' && (
+                        <button
+                          type="button"
+                          onClick={() => resetMatch(match.id)}
+                          className="min-h-10 border border-red-500/40 px-3 text-xs uppercase text-red-400 hover:bg-red-500/10"
+                        >
+                          Reset
                         </button>
                       )}
                     </div>
