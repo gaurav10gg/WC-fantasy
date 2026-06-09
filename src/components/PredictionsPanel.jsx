@@ -5,12 +5,13 @@ import LeaderboardTable from './LeaderboardTable'
 import LeagueHeader from './LeagueHeader'
 import MatchCard from './MatchCard'
 import MatchTransparencyModal from './MatchTransparencyModal'
+import NextRoundBanner from './NextRoundBanner'
 import UserPredictionsModal from './UserPredictionsModal'
 import { useConfettiOnCorrectResults } from '../hooks/useConfettiOnCorrectResults'
 import { fireGoalConfetti } from '../lib/confetti'
 import { isMatchFinished } from '../lib/matchHelpers'
 import { GROUP_LABELS } from '../lib/scoring'
-import { getRoundInfo } from '../lib/rounds'
+import { getNextRoundKey, getRoundInfo, roundPredictionsOpenAt } from '../lib/rounds'
 import { supabase } from '../lib/supabase'
 
 export default function PredictionsPanel({
@@ -36,6 +37,7 @@ export default function PredictionsPanel({
   const [success, setSuccess] = useState('')
   const [viewingUser, setViewingUser] = useState(null)
   const [transparencyMatch, setTransparencyMatch] = useState(null)
+  const [nextRoundSchedule, setNextRoundSchedule] = useState(null)
 
   const roundInfo = getRoundInfo(activeRoundKey)
   const isGroupWinnersRound = activeRoundKey === 'group_winners'
@@ -134,6 +136,29 @@ export default function PredictionsPanel({
       ? GROUP_LABELS.some((l) => gp[l])
       : currentMatchIds.some((id) => mp[id]?.predicted_winner)
     setRoundSubmitted(hasRoundPreds)
+
+    const nextKey = getNextRoundKey(roundKey)
+    if (nextKey) {
+      const { data: firstNextMatch } = await supabase
+        .from('matches')
+        .select('match_date')
+        .eq('round_key', nextKey)
+        .order('match_date', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      if (firstNextMatch?.match_date) {
+        setNextRoundSchedule({
+          nextRound: getRoundInfo(nextKey),
+          firstKickoff: firstNextMatch.match_date,
+          opensAt: roundPredictionsOpenAt(firstNextMatch.match_date),
+        })
+      } else {
+        setNextRoundSchedule(null)
+      }
+    } else {
+      setNextRoundSchedule(null)
+    }
 
     await loadLeaderboard()
     setLoading(false)
@@ -329,6 +354,14 @@ export default function PredictionsPanel({
               </div>
             )}
           </div>
+
+          {nextRoundSchedule && (
+            <NextRoundBanner
+              nextRound={nextRoundSchedule.nextRound}
+              firstKickoff={nextRoundSchedule.firstKickoff}
+              opensAt={nextRoundSchedule.opensAt}
+            />
+          )}
 
           {finishedMatches.length > 0 && (
             <section className="mt-8">

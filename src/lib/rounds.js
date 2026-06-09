@@ -10,8 +10,23 @@ export const ROUNDS = [
   { key: 'final', label: 'Final', subtitle: 'Knockout', type: 'matches' },
 ]
 
+export const PREDICTIONS_OPEN_HOURS_BEFORE_KICKOFF = 72
+
 export function getRoundInfo(roundKey) {
   return ROUNDS.find((r) => r.key === roundKey) ?? { key: roundKey, label: roundKey, subtitle: '', type: 'matches' }
+}
+
+export function getNextRoundKey(currentKey) {
+  const idx = ROUNDS.findIndex((r) => r.key === currentKey)
+  if (idx === -1 || idx >= ROUNDS.length - 1) return null
+  return ROUNDS[idx + 1].key
+}
+
+/** When prediction picks unlock — 72h before the round's first kickoff. */
+export function roundPredictionsOpenAt(firstKickoffIso) {
+  if (!firstKickoffIso) return null
+  const kickoff = new Date(firstKickoffIso).getTime()
+  return new Date(kickoff - PREDICTIONS_OPEN_HOURS_BEFORE_KICKOFF * 60 * 60 * 1000)
 }
 
 export function matchdayFromNumber(n) {
