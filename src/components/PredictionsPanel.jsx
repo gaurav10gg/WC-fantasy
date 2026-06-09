@@ -4,6 +4,7 @@ import GroupPredictionPicker from './GroupPredictionPicker'
 import LeaderboardTable from './LeaderboardTable'
 import LeagueHeader from './LeagueHeader'
 import MatchCard from './MatchCard'
+import UserPredictionsModal from './UserPredictionsModal'
 import { GROUP_LABELS } from '../lib/scoring'
 import { getRoundInfo } from '../lib/rounds'
 import { supabase } from '../lib/supabase'
@@ -29,6 +30,7 @@ export default function PredictionsPanel({
   const [roundSubmitted, setRoundSubmitted] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [viewingUser, setViewingUser] = useState(null)
 
   const roundInfo = getRoundInfo(activeRoundKey)
   const isGroupWinnersRound = activeRoundKey === 'group_winners'
@@ -276,7 +278,12 @@ export default function PredictionsPanel({
               {leaderboardSource === 'global' ? 'Global Rankings' : 'League Scoreboard'}
             </h2>
           </div>
-          <LeaderboardTable rows={leaderboard} loading={false} showRank={leaderboardSource === 'global'} />
+          <LeaderboardTable
+            rows={leaderboard}
+            loading={false}
+            showRank={leaderboardSource === 'global'}
+            onViewPicks={(row) => setViewingUser(row)}
+          />
         </div>
       ) : (
         <>
@@ -374,6 +381,15 @@ export default function PredictionsPanel({
             </div>
           )}
         </>
+      )}
+      {viewingUser && (
+        <UserPredictionsModal
+          groupId={groupId}
+          userId={viewingUser.user_id}
+          displayName={viewingUser.display_name}
+          viewerUserId={userId}
+          onClose={() => setViewingUser(null)}
+        />
       )}
     </>
   )

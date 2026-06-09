@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LeaderboardTable from '../components/LeaderboardTable'
+import UserPredictionsModal from '../components/UserPredictionsModal'
 import Navbar from '../components/Navbar'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -11,6 +12,8 @@ export default function Rankings() {
   const [loading, setLoading] = useState(true)
   const [teamName, setTeamName] = useState('')
   const [competing, setCompeting] = useState(false)
+  const [globalGroupId, setGlobalGroupId] = useState(null)
+  const [viewingUser, setViewingUser] = useState(null)
 
   useEffect(() => {
     loadRankings()
@@ -40,6 +43,7 @@ export default function Rankings() {
       setTeamName(prof?.team_name || prof?.display_name || 'Your team')
 
       const { data: gId } = await supabase.rpc('get_global_group_id')
+      setGlobalGroupId(gId)
       if (!gId) {
         setCompeting(false)
         return
@@ -123,9 +127,32 @@ export default function Rankings() {
         </p>
 
         <div className="fixture-card mt-8">
-          <LeaderboardTable rows={rows} loading={loading} showRank />
+          <LeaderboardTable
+            rows={rows}
+            loading={loading}
+            showRank
+            onViewPicks={user && globalGroupId ? (row) => setViewingUser(row) : undefined}
+          />
         </div>
+        {!user && (
+          <p className="mt-3 text-center text-xs text-muted">
+            <Link to="/login" className="text-pitch hover:underline">
+              Log in
+            </Link>{' '}
+            to view player picks after kickoff.
+          </p>
+        )}
       </main>
+
+      {viewingUser && globalGroupId && user && (
+        <UserPredictionsModal
+          groupId={globalGroupId}
+          userId={viewingUser.user_id}
+          displayName={viewingUser.display_name}
+          viewerUserId={user.id}
+          onClose={() => setViewingUser(null)}
+        />
+      )}
     </div>
   )
 }

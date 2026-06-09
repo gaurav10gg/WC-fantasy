@@ -1,4 +1,4 @@
-export default function LeaderboardTable({ rows, loading, showRank = false }) {
+export default function LeaderboardTable({ rows, loading, showRank = false, onViewPicks }) {
   if (loading) {
     return <p className="py-12 text-center text-muted uppercase tracking-widest">Loading scoreboard…</p>
   }
@@ -38,14 +38,33 @@ export default function LeaderboardTable({ rows, loading, showRank = false }) {
                   </span>
                 </td>
                 <td className="relative px-3 py-4 sm:px-4 sm:py-5">
-                  <div
-                    className={`font-display text-base font-bold uppercase tracking-wide sm:text-lg ${
-                      isLeader ? 'text-gold-bright' : 'text-cream'
-                    }`}
-                  >
-                    {row.display_name}
-                  </div>
-                  <div className="mt-0.5 text-xs text-muted">
+                  {onViewPicks ? (
+                    <button
+                      type="button"
+                      onClick={() => onViewPicks(row)}
+                      className="group text-left"
+                    >
+                      <div
+                        className={`font-display text-base font-bold uppercase tracking-wide transition-colors group-hover:text-pitch-bright sm:text-lg ${
+                          isLeader ? 'text-gold-bright group-hover:text-pitch-bright' : 'text-cream'
+                        }`}
+                      >
+                        {row.display_name}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted group-hover:text-pitch">
+                        View picks →
+                      </div>
+                    </button>
+                  ) : (
+                    <div
+                      className={`font-display text-base font-bold uppercase tracking-wide sm:text-lg ${
+                        isLeader ? 'text-gold-bright' : 'text-cream'
+                      }`}
+                    >
+                      {row.display_name}
+                    </div>
+                  )}
+                  <div className={`text-xs text-muted ${onViewPicks ? 'mt-1' : 'mt-0.5'}`}>
                     {row.correct_match_predictions} matches · {row.correct_group_winner_predictions} groups
                   </div>
                 </td>
