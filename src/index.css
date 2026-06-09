@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/* Theme tokens — switch via data-theme on <html> */
+:root,
+[data-theme="dark"] {
+  --theme-stadium: #000000;
+  --theme-surface: #0a0a0a;
+  --theme-elevated: #111111;
+  --theme-border: #1a1a1a;
+  --theme-border-light: #2a2a2a;
+  --theme-muted: #888888;
+  --theme-cream: #f0f0f0;
+  --theme-pitch: #1fa84a;
+  --theme-pitch-bright: #2dcc63;
+  --theme-gold: #c9a227;
+  --theme-gold-bright: #e4bc3a;
+  --theme-input: #0a0a0a;
+  --theme-overlay: rgba(0, 0, 0, 0.75);
+}
+
+[data-theme="light"] {
+  --theme-stadium: #e8eaed;
+  --theme-surface: #ffffff;
+  --theme-elevated: #f5f6f8;
+  --theme-border: #d8dde3;
+  --theme-border-light: #c4cad2;
+  --theme-muted: #5f6b7a;
+  --theme-cream: #0d1117;
+  --theme-pitch: #16803c;
+  --theme-pitch-bright: #1a9e4a;
+  --theme-gold: #9a7b0a;
+  --theme-gold-bright: #b8920f;
+  --theme-input: #ffffff;
+  --theme-overlay: rgba(0, 0, 0, 0.4);
+}
+
+@theme {
+  --color-pitch: var(--theme-pitch);
+  --color-pitch-bright: var(--theme-pitch-bright);
+  --color-gold: var(--theme-gold);
+  --color-gold-bright: var(--theme-gold-bright);
+  --color-stadium: var(--theme-stadium);
+  --color-surface: var(--theme-surface);
+  --color-elevated: var(--theme-elevated);
+  --color-border: var(--theme-border);
+  --color-border-light: var(--theme-border-light);
+  --color-muted: var(--theme-muted);
+  --color-cream: var(--theme-cream);
+  --color-input: var(--theme-input);
+  --font-display: "Barlow Condensed", "Inter", sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--theme-stadium);
+  color: var(--theme-cream);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.stadium-bg {
+  background: var(--theme-stadium);
+}
+
+.pitch-lines {
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent,
+    transparent 100px,
+    color-mix(in srgb, var(--theme-pitch) 4%, transparent) 100px,
+    color-mix(in srgb, var(--theme-pitch) 4%, transparent) 101px
+  );
+}
+
+.fixture-card {
+  background: var(--theme-elevated);
+  border: 1px solid var(--theme-border);
+}
+
+.fixture-card:hover:not(.opacity-55):not(.opacity-60) {
+  border-color: var(--theme-border-light);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--theme-pitch) 20%, transparent);
+}
+
+.btn-primary {
+  background: var(--theme-pitch);
+  color: #000;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+
+[data-theme="light"] .btn-primary {
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--theme-pitch-bright);
+}
+
+.btn-secondary {
+  border: 1px solid var(--theme-border-light);
+  color: var(--theme-cream);
+  background: transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--theme-pitch);
+  background: color-mix(in srgb, var(--theme-pitch) 8%, transparent);
+}
+
+.input-field {
+  width: 100%;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-input);
+  color: var(--theme-cream);
+  padding: 0.75rem 1rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input-field:focus {
+  border-color: var(--theme-pitch);
+}
+
+.input-field::placeholder {
+  color: color-mix(in srgb, var(--theme-muted) 70%, transparent);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, button, select {
+  font-size: 16px;
+}
+
+@media (min-width: 640px) {
+  input, button, select {
+    font-size: inherit;
+  }
+}
