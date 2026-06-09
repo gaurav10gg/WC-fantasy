@@ -49,11 +49,9 @@ export default function PredictionsPanel({
       return
     }
 
-    const { data: scores } = await supabase
-      .from('leaderboard')
-      .select('*')
-      .eq('group_id', groupId)
-      .order('total_points', { ascending: false })
+    const { data: scores } = await supabase.rpc('get_group_leaderboard', {
+      p_group_id: groupId,
+    })
 
     if (!scores?.length) {
       setLeaderboard([])
